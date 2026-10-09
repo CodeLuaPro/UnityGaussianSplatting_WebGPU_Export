@@ -50,6 +50,7 @@ namespace GaussianSplatting.Runtime
         GraphicsFormat m_PersistentColorFormat;
         GraphicsFormat m_PersistentMotionFormat;
 
+
         // Public accessor to get or create the temporal filter instance.
         // Other renderer features (URP/HDRP) should call this to obtain the filter
         // instead of accessing internal fields directly.
@@ -196,7 +197,7 @@ namespace GaussianSplatting.Runtime
             foreach (var kvp in m_Splats)
             {
                 var gs = kvp.Key;
-                if (gs == null || !gs.isActiveAndEnabled || !gs.HasValidAsset || !gs.HasValidRenderSetup)
+                if (gs == null || !gs.m_Visible || !gs.isActiveAndEnabled || !gs.HasValidAsset || !gs.HasValidRenderSetup)
                     continue;
                 m_ActiveSplats.Add((kvp.Key, kvp.Value));
             }
@@ -408,8 +409,24 @@ namespace GaussianSplatting.Runtime
 
         void OnPreCullCamera(Camera cam)
         {
-            if (!GatherSplatsForCamera(cam))
+            //if (!GatherSplatsForCamera(cam))
+            //    return;
+
+            bool hasSplats = GatherSplatsForCamera(cam);
+
+            InitialClearCmdBuffer(cam);
+
+            if (!hasSplats)
+            {
+                //m_CommandBuffer.ClearRenderTarget(
+                //    RTClearFlags.Color,
+                //    new Color(0, 0, 0, 0),
+                //    0,
+                //    0
+                //);
+
                 return;
+            }
 
             EnsureMaterials();
             var matComposite = m_MatComposite;
@@ -524,6 +541,7 @@ namespace GaussianSplatting.Runtime
         internal GaussianSplatOctree m_Octree;
         int m_LastCullingFrame = -1;
         internal bool m_OctreeBuilt;
+        public bool m_Visible;
 
         internal static class Props
         {
